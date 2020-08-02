@@ -666,9 +666,9 @@ var dtpPanel = Utils.defineClass({
                 [
                     'changed::showdesktop-button-width',
                     'changed::trans-use-custom-bg',
-                    'changed::trans-bg-color',
                     'changed::desktop-line-use-custom-color',
                     'changed::desktop-line-custom-color'
+                    'changed::trans-bg-color'
                 ],
                 () => this._setShowDesktopButtonStyle()
             ],
@@ -1307,6 +1307,7 @@ var dtpPanel = Utils.defineClass({
         if (this._showDesktopButton) {
             let buttonSize = Me.settings.get_int('showdesktop-button-width') + 'px;';
             let isVertical = this.checkIfVertical();
+
             let sytle = "border: 0 solid " + rgb + ";";
             sytle += isVertical ? 'border-top-width:1px;height:' + buttonSize : 'border-left-width:1px;width:' + buttonSize;
 
