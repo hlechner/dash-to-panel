@@ -326,7 +326,7 @@ var dtpPanel = Utils.defineClass({
             [
                 Utils.getStageTheme(), 
                 'changed', 
-                () => this._resetGeometry()
+                () => (this._resetGeometry(), this._setShowDesktopButtonStyle()),
             ],
             [
                 // sync hover after a popupmenu is closed
@@ -663,8 +663,14 @@ var dtpPanel = Utils.defineClass({
             ],
             [
                 Me.settings,
-                'changed::showdesktop-button-width',
-                () => this._setShowDesktopButtonSize()
+                [
+                    'changed::showdesktop-button-width',
+                    'changed::trans-use-custom-bg',
+                    'changed::desktop-line-use-custom-color',
+                    'changed::desktop-line-custom-color',
+                    'changed::trans-bg-color'
+                ],
+                () => this._setShowDesktopButtonStyle()
             ],
             [
                 Me.desktopSettings,
@@ -1253,11 +1259,12 @@ var dtpPanel = Utils.defineClass({
                             y_fill: true,
                             track_hover: true });
 
-            this._setShowDesktopButtonSize();
+            this._setShowDesktopButtonStyle();
 
             this._showDesktopButton.connect('button-press-event', () => this._onShowDesktopButtonPress());
             this._showDesktopButton.connect('enter-event', () => {
-                this._showDesktopButton.add_style_class_name('showdesktop-button-hovered');
+                this._showDesktopButton.add_style_class_name(this._getBackgroundBrightness() ?
+                            'showdesktop-button-light-hovered' : 'showdesktop-button-dark-hovered');
 
                 if (Me.settings.get_boolean('show-showdesktop-hover')) {
                     this._timeoutsHandler.add([T4, Me.settings.get_int('show-showdesktop-delay'), () => {
@@ -1268,7 +1275,8 @@ var dtpPanel = Utils.defineClass({
             });
             
             this._showDesktopButton.connect('leave-event', () => {
-                this._showDesktopButton.remove_style_class_name('showdesktop-button-hovered');
+                this._showDesktopButton.remove_style_class_name(this._getBackgroundBrightness() ?
+                            'showdesktop-button-light-hovered' : 'showdesktop-button-dark-hovered');
 
                 if (Me.settings.get_boolean('show-showdesktop-hover')) {
                     if (this._timeoutsHandler.getId(T4)) {
@@ -1290,15 +1298,27 @@ var dtpPanel = Utils.defineClass({
         }
     },
 
-    _setShowDesktopButtonSize: function() {
+    _setShowDesktopButtonStyle: function() {
+        let rgb = this._getBackgroundBrightness() ? "rgba(55, 55, 55, .2)" : "rgba(200, 200, 200, .2)";
+
+        let isLineCustom = Me.settings.get_boolean('desktop-line-use-custom-color');
+        rgb = isLineCustom ? Me.settings.get_string('desktop-line-custom-color') : rgb;
+
         if (this._showDesktopButton) {
             let buttonSize = Me.settings.get_int('showdesktop-button-width') + 'px;';
             let isVertical = this.checkIfVertical();
-            let sytle = isVertical ? 'border-top-width:1px;height:' + buttonSize : 'border-left-width:1px;width:' + buttonSize;
-            
+
+            let sytle = "border: 0 solid " + rgb + ";";
+            sytle += isVertical ? 'border-top-width:1px;height:' + buttonSize : 'border-left-width:1px;width:' + buttonSize;
+
             this._showDesktopButton.set_style(sytle);
             this._showDesktopButton[(isVertical ? 'x' : 'y') + '_expand'] = true;
         }
+    },
+
+    // _getBackgroundBrightness: return true if panel has a bright background color
+    _getBackgroundBrightness: function() {
+        return Utils.checkIfColorIsBright(this.dynamicTransparency.backgroundColorRgb);
     },
 
     _toggleWorkspaceWindows: function(hide, workspace) {
